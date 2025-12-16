@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.ObjectModel;
 using Todo.Models;
 using Todo.Services;
 
@@ -9,6 +10,7 @@ namespace Todo
     public partial class MainPage : ContentPage
     {
         List<TodoItem> allItems = new();
+        ObservableCollection<TodoItem> visibleItems = new();
         ITodoService todoService = new TodoService();
 
         public MainPage()
@@ -16,6 +18,8 @@ namespace Todo
             try
             {
                 InitializeComponent();
+                // set the ItemsSource once to an observable collection to avoid swapping the source and triggering layout issues
+                TasksCollection.ItemsSource = visibleItems;
             }
             catch (Exception ex)
             {
@@ -68,11 +72,27 @@ namespace Todo
 
                 var list = items.ToList();
 
-                if (TasksCollection != null)
-                    TasksCollection.ItemsSource = list;
+                // update observable collection on UI thread to avoid collection modified exceptions
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    try
+                    {
+                        visibleItems.Clear();
+                        foreach (var it in list)
+                            visibleItems.Add(it);
 
-                if (EmptyLabel != null)
-                    EmptyLabel.IsVisible = list.Count == 0;
+                        if (EmptyLabel != null)
+                            EmptyLabel.IsVisible = list.Count == 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        // fallback: display error
+                        Content = new ScrollView
+                        {
+                            Content = new Label { Text = $"ApplyFilter UI update error:\n{ex}", TextColor = Colors.Red }
+                        };
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -93,23 +113,31 @@ namespace Todo
             await Navigation.PushAsync(new EditPage(null, OnItemSaved));
         }
 
-        async void OnTaskSelected(object? sender, SelectionChangedEventArgs e)
+        async void OnItemTapped(object? sender, EventArgs e)
         {
             try
             {
-                var item = e.CurrentSelection.FirstOrDefault() as TodoItem;
-                if (item == null) return;
-                // deselect
-                ((CollectionView)sender).SelectedItem = null;
-                await Navigation.PushAsync(new EditPage(item, OnItemSaved));
+                if (sender is VisualElement ve && ve.BindingContext is TodoItem item)
+                {
+                    await Navigation.PushAsync(new EditPage(item, OnItemSaved));
+                }
+                else if (sender is TapGestureRecognizer tr && tr.CommandParameter is TodoItem itemParam)
+                {
+                    await Navigation.PushAsync(new EditPage(itemParam, OnItemSaved));
+                }
             }
             catch (Exception ex)
             {
                 Content = new ScrollView
                 {
-                    Content = new Label { Text = $"OnTaskSelected error:\n{ex}", TextColor = Colors.Red }
+                    Content = new Label { Text = $"OnItemTapped error:\n{ex}", TextColor = Colors.Red }
                 };
             }
+        }
+
+        async void OnTaskSelected(object? sender, SelectionChangedEventArgs e)
+        {
+            // no longer used; kept for compatibility
         }
 
         async void OnItemSaved()
@@ -128,21 +156,24 @@ namespace Todo
             }
         }
 
-        void OnCheckBoxChanged(object? sender, CheckedChangedEventArgs e)
+        async void OnCheckBoxChanged(object? sender, CheckedChangedEventArgs e)
         {
             try
             {
                 if (sender is CheckBox cb && cb.BindingContext is TodoItem item)
                 {
+                    // prevent tap gestures from acting on checkbox taps
+                    cb.InputTransparent = false;
+
                     item.IsCompleted = e.Value;
-                    // ensure item exists in list
+                    // update in allItems
                     var idx = allItems.FindIndex(i => i.Id == item.Id);
                     if (idx >= 0)
                         allItems[idx] = item;
                     else
                         allItems.Add(item);
 
-                    _ = todoService.SaveAll(allItems);
+                    await todoService.SaveAll(allItems);
                     ApplyFilter();
                 }
             }

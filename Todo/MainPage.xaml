@@ -4,9 +4,15 @@
              x:Class="Todo.MainPage"
              Title="Задачи">
 
-    <VerticalStackLayout Padding="12" Spacing="12">
+    <Grid RowSpacing="8" ColumnSpacing="0" Padding="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-        <HorizontalStackLayout HorizontalOptions="Fill" VerticalOptions="Center">
+        <!-- Header: filter + add -->
+        <HorizontalStackLayout Grid.Row="0" HorizontalOptions="Fill" VerticalOptions="Center">
             <Picker x:Name="FilterPicker" WidthRequest="180" Title="Фильтр" SelectedIndexChanged="OnFilterChanged">
                 <Picker.Items>
                     <x:String>Текущие</x:String>
@@ -18,9 +24,11 @@
             <Button Text="Добавить" Clicked="OnAddClicked" HorizontalOptions="EndAndExpand" />
         </HorizontalStackLayout>
 
-        <Label x:Name="EmptyLabel" Text="Нет запланированных задач" IsVisible="False" HorizontalOptions="Center" VerticalOptions="CenterAndExpand" />
+        <!-- Empty label -->
+        <Label x:Name="EmptyLabel" Grid.Row="1" Text="Нет запланированных задач" IsVisible="False" HorizontalOptions="Center" VerticalOptions="Center" />
 
-        <CollectionView x:Name="TasksCollection" SelectionMode="Single" SelectionChanged="OnTaskSelected" VerticalOptions="FillAndExpand">
+        <!-- List -->
+        <CollectionView x:Name="TasksCollection" Grid.Row="2" SelectionMode="None" VerticalOptions="FillAndExpand">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" />
             </CollectionView.ItemsLayout>
@@ -35,10 +43,18 @@
                             </SwipeItems>
                         </SwipeView.RightItems>
 
-                        <Frame Margin="0,4" Padding="8" HasShadow="True" VerticalOptions="Start">
-                            <HorizontalStackLayout>
+                        <!-- Fixed-height item to avoid layout collapse on Android -->
+                        <Frame Margin="0,4" Padding="8" HasShadow="True" VerticalOptions="Start" HeightRequest="72" MinimumHeightRequest="72">
+
+                            <HorizontalStackLayout VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding IsCompleted}" CheckedChanged="OnCheckBoxChanged" BindingContext="{Binding .}" VerticalOptions="Center" />
-                                <VerticalStackLayout Padding="8,0" VerticalOptions="Start">
+
+                                <VerticalStackLayout Padding="8,0" VerticalOptions="Center">
+                                    <!-- Tap only on text area to open editor -->
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnItemTapped" CommandParameter="{Binding .}" NumberOfTapsRequired="1" />
+                                    </VerticalStackLayout.GestureRecognizers>
+
                                     <Label Text="{Binding Title}" FontAttributes="Bold" />
                                     <Label Text="{Binding Description}" LineBreakMode="TailTruncation" />
                                 </VerticalStackLayout>
@@ -49,6 +65,6 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-    </VerticalStackLayout>
+    </Grid>
 
 </ContentPage>
