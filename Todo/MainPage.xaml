@@ -21,17 +21,30 @@
         <Label x:Name="EmptyLabel" Text="Нет запланированных задач" IsVisible="False" HorizontalOptions="Center" VerticalOptions="CenterAndExpand" />
 
         <CollectionView x:Name="TasksCollection" SelectionMode="Single" SelectionChanged="OnTaskSelected" VerticalOptions="FillAndExpand">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Margin="0,4" Padding="8" HasShadow="True">
-                        <HorizontalStackLayout>
-                            <CheckBox IsChecked="{Binding IsCompleted}" CheckedChanged="OnCheckBoxChanged" BindingContext="{Binding .}" VerticalOptions="Center" />
-                            <VerticalStackLayout Padding="8,0">
-                                <Label Text="{Binding Title}" FontAttributes="Bold" />
-                                <Label Text="{Binding Description}" LineBreakMode="TailTruncation" />
-                            </VerticalStackLayout>
-                        </HorizontalStackLayout>
-                    </Frame>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute">
+                                <SwipeItem Text="Редактировать" Invoked="OnEditInvoked" CommandParameter="{Binding .}" />
+                                <SwipeItem Text="Удалить" Invoked="OnDeleteInvoked" CommandParameter="{Binding .}" BackgroundColor="Crimson" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Frame Margin="0,4" Padding="8" HasShadow="True" VerticalOptions="Start">
+                            <HorizontalStackLayout>
+                                <CheckBox IsChecked="{Binding IsCompleted}" CheckedChanged="OnCheckBoxChanged" BindingContext="{Binding .}" VerticalOptions="Center" />
+                                <VerticalStackLayout Padding="8,0" VerticalOptions="Start">
+                                    <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                    <Label Text="{Binding Description}" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                        </Frame>
+                    </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

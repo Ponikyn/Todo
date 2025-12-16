@@ -12,7 +12,7 @@
         <Editor x:Name="DescriptionEditor" HeightRequest="120" Placeholder="Description" />
 
         <HorizontalStackLayout Spacing="12">
-            <Button Text="Save" Clicked="OnSaveClicked" HorizontalOptions="StartAndExpand" />
+            <Button x:Name="SaveBtn" Text="Save" Clicked="OnSaveClicked" HorizontalOptions="StartAndExpand" />
             <Button x:Name="DeleteBtn" Text="Delete" Clicked="OnDeleteClicked" IsVisible="False" HorizontalOptions="End" />
         </HorizontalStackLayout>
     </VerticalStackLayout>

@@ -16,15 +16,20 @@ namespace Todo
             InitializeComponent();
             this.onSaved = onSaved;
 
+            // set Russian texts at runtime to avoid XAML encoding issues
+            this.Title = existing == null ? "Новая задача" : "Редактировать";
+            SaveBtn.Text = "Сохранить";
+            DeleteBtn.Text = "Удалить";
+            DeleteToolbar.Text = "Удалить";
+            TitleEntry.Placeholder = "Наименование";
+            DescriptionEditor.Placeholder = "Описание";
+
             if (existing is null)
             {
                 item = new TodoItem();
                 DeleteBtn.IsVisible = false;
-                // ToolbarItem has no IsVisible property; add/remove it instead
                 if (ToolbarItems.Contains(DeleteToolbar))
                     ToolbarItems.Remove(DeleteToolbar);
-
-                Title = "New Task";
             }
             else
             {
@@ -38,8 +43,6 @@ namespace Todo
                 DeleteBtn.IsVisible = true;
                 if (!ToolbarItems.Contains(DeleteToolbar))
                     ToolbarItems.Add(DeleteToolbar);
-
-                Title = "Edit Task";
             }
 
             TitleEntry.Text = item.Title;
@@ -65,7 +68,7 @@ namespace Todo
 
         async void OnDeleteClicked(object? sender, EventArgs e)
         {
-            var confirmed = await DisplayAlert("Delete", "Delete task?", "Yes", "No");
+            var confirmed = await DisplayAlert("Удалить","Удалить задачу?","Да","Нет");
             if (!confirmed) return;
 
             allItems = await todoService.GetAll();
